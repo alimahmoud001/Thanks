@@ -1,40 +1,28 @@
-import logging
+import os
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, MessageHandler, filters, ContextTypes
+from flask import Flask
 
-# توكن البوت الخاص بك
-TOKEN = "7906627459:AAFupbP8dosA92dUlWH0DpGvAZK0yGr17b4"
-# معرف المحادثة (chat_id)
-CHAT_ID = 910021564
+# استخراج المتغيرات من البيئة
+TOKEN = os.environ.get('TOKEN')
+CHAT_ID = os.environ.get('CHAT_ID')
 
-# إعداد تسجيل الأخطاء
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+# تهيئة تطبيق Flask
+web_app = Flask(__name__)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """يرسل رسالة ترحيبية عند استخدام الأمر /start."""
-    user = update.effective_user
-    await update.message.reply_text(f"مرحبًا {user.first_name}! أنا بوت بسيط. فقط سأشكرك عندما ترسل أي رسالة.")
+@web_app.route('/')
+def home():
+    return "Bot is running!"
 
-async def thank_you(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """يرد على الرسائل بكلمة شكرًا."""
+async def thank_you(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("شكرا")
 
-def main() -> None:
-    """تشغيل البوت."""
-    # إنشاء التطبيق وتمرير توكن البوت.
-    application = Application.builder().token(TOKEN).build()
-
-    # معالج للأمر /start
-    application.add_handler(CommandHandler("start", start))
-
-    # معالج للرسائل النصية العادية (كل نص ليس أمرًا)
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, thank_you))
-
-    # تشغيل البوت حتى يتم الضغط على Ctrl-C
-    application.run_polling()
+def run_bot():
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(MessageHandler(filters.ALL, thank_you))
+    app.run_polling()
 
 if __name__ == "__main__":
-    main()
+    import threading
+    threading.Thread(target=run_bot).start()
+    web_app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
