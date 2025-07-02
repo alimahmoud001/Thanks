@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: telegram-thanks-bot
-    runtime: docker
-    env: docker
-    plan: free
-    envVars:
-      - key: TOKEN
-        value: 7906627459:AAFupbP8dosA92dUlWH0DpGvAZK0yGr17b
